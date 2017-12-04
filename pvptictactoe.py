@@ -25,7 +25,6 @@ class Game:
         self.player1_mark = ''
         self.player2_name = ''
         self.player2_mark = ''
-        self.player_score = 0
         self.win_combinations = ([0, 1, 2],  # Horizontal
                                  [3, 4, 5],
                                  [6, 7, 8],
@@ -74,58 +73,145 @@ class Game:
         con.execute('''
         CREATE TABLE IF NOT EXISTS `players` (
         `id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        `name`	TEXT NOT NULL,
+        `name`	TEXT NOT NULL UNIQUE,
         `score`	INTEGER NOT NULL DEFAULT 0
         );
         ''')
-        con.execute("select * from players")
-        rows = con.fetchall()
-        if len(rows) == 0:
-            con.execute("insert into players(name) values (?)", (self.player1_name,))
-            con.execute("insert into players(name) values (?)", (self.player2_name,))
         # Save(commit the changes)
         conn.commit()
         # Close the connection
         conn.close()
 
-    def insert_update_database(self):
+    def incr_decr_score_player1_win(self):
+        # the player gets 10 points if win
+        # the player gets -10 if lose
         conn = sqlite3.connect("scores.db")
         con = conn.cursor()
-        for row in con.execute("select * from players"):
-            print(row)
-            if self.player1_name == row[0] and self.player2_name != row[0]:
-                print("Cetiri")
-                # use existed name for the first player, update his score if he won
+        con.execute("select * from players")
+        rows = con.fetchall()
+        # if play the game first time
+        if len(rows) == 0:
+            con.execute("insert into players(name, score) values (?,?)", (self.player1_name, '10'))
+            con.execute("insert into players(name, score) values (?,?)", (self.player2_name, '-10'))
+        else:
+            names = []
+            for i in rows:
+                names.append(i[1])
+            if self.player1_name in names and self.player2_name not in names:
+                con.execute("select score from players where name = '" + self.player1_name + "'")
+                score_player1 = con.fetchone()[0]
                 con.execute("update players set score = '" + str(
-                    self.player_score) + "' where name = '" + self.player1_name + "'")
-                # insert the new one
-                con.execute("insert into players(name) values (?)", (self.player2_name,))
-            elif self.player1_name != row[0] and self.player2_name == row[0]:
-                print("Pet")
-                # insert the new one
-                con.execute("insert into players(name) values (?)", (self.player1_name,))
-                # use existed name for the second player, update his score if he won
+                    score_player1 + 10) + "' where name = '" + self.player1_name + "'")
+                con.execute("insert into players(name,score) values (?,?)", (self.player2_name, '-10'))
+            elif self.player1_name not in names and self.player2_name in names:
+                con.execute("insert into players(name,score) values (?,?)", (self.player1_name, '10'))
+                con.execute("select score from players where name = '" + self.player2_name + "'")
+                score_player2 = con.fetchone()[0]
                 con.execute("update players set score = '" + str(
-                    self.player_score) + "' where name = '" + self.player2_name + "'")
-            elif self.player1_name == row[0] and self.player2_name == row[0]:
-                # use existed names for the both players, update the score for the players
-                print("Sest")
+                    score_player2 - 10) + "' where name = '" + self.player2_name + "'")
+            elif self.player1_name in names and self.player2_name in names:
+                con.execute("select score from players where name = '" + self.player1_name + "'")
+                score_player1 = con.fetchone()[0]
                 con.execute("update players set score = '" + str(
-                    self.player_score) + "' where name = '" + self.player1_name + "'")
+                    score_player1 + 10) + "' where name = '" + self.player1_name + "'")
+                con.execute("select score from players where name = '" + self.player2_name + "'")
+                score_player2 = con.fetchone()[0]
                 con.execute("update players set score = '" + str(
-                    self.player_score) + "' where name = '" + self.player2_name + "'")
+                    score_player2 -10) + "' where name = '" + self.player2_name + "'")
             else:
-                # insert both players
-                print("Sedam")
-                con.execute("insert into players(name) values (?)", (self.player1_name,))
-                con.execute("insert into players(name) values (?)", (self.player2_name,))
-        print("Dodje ovde")
+                con.execute("insert into players(name,score) values (?,?)", (self.player1_name, '10'))
+                con.execute("insert into players(name,score) values (?,?)", (self.player2_name, '-10'))
         # Save(commit the changes)
         conn.commit()
-        print("Odradi commit")
         # Close the connection
         conn.close()
 
+    def incr_decr_score_player2_win(self):
+        # the player gets 10 points if win
+        # the player gets -10 if lose
+        conn = sqlite3.connect("scores.db")
+        con = conn.cursor()
+        con.execute("select * from players")
+        rows = con.fetchall()
+        # if play the game first time
+        if len(rows) == 0:
+            con.execute("insert into players(name, score) values (?,?)", (self.player1_name, '-10'))
+            con.execute("insert into players(name, score) values (?,?)", (self.player2_name, '10'))
+        else:
+            names = []
+            for i in rows:
+                names.append(i[1])
+            if self.player1_name in names and self.player2_name not in names:
+                con.execute("select score from players where name = '" + self.player1_name + "'")
+                score_player1 = con.fetchone()[0]
+                con.execute("update players set score = '" + str(
+                    score_player1 - 10) + "' where name = '" + self.player1_name + "'")
+                con.execute("insert into players(name,score) values (?,?)", (self.player2_name, '10'))
+            elif self.player1_name not in names and self.player2_name in names:
+                con.execute("insert into players(name,score) values (?,?)", (self.player1_name, '-10'))
+                con.execute("select score from players where name = '" + self.player2_name + "'")
+                score_player2 = con.fetchone()[0]
+                con.execute("update players set score = '" + str(
+                    score_player2 + 10) + "' where name = '" + self.player2_name + "'")
+            elif self.player1_name in names and self.player2_name in names:
+                con.execute("select score from players where name = '" + self.player1_name + "'")
+                score_player1 = con.fetchone()[0]
+                con.execute("update players set score = '" + str(
+                    score_player1 -10) + "' where name = '" + self.player1_name + "'")
+                con.execute("select score from players where name = '" + self.player2_name + "'")
+                score_player2 = con.fetchone()[0]
+                con.execute("update players set score = '" + str(
+                    score_player2 + 10) + "' where name = '" + self.player2_name + "'")
+            else:
+                con.execute("insert into players(name,score) values (?,?)", (self.player1_name, '10'))
+                con.execute("insert into players(name,score) values (?,?)", (self.player2_name, '-10'))
+        # Save(commit the changes)
+        conn.commit()
+        # Close the connection
+        conn.close()
+
+    def incr_score_match_draw(self):
+        # each player gets 5 points
+        conn = sqlite3.connect("scores.db")
+        con = conn.cursor()
+        con.execute("select * from players")
+        rows = con.fetchall()
+        # if play the game first time
+        if len(rows) == 0:
+            con.execute("insert into players(name, score) values (?,?)", (self.player1_name, '5'))
+            con.execute("insert into players(name, score) values (?,?)", (self.player2_name, '5'))
+        else:
+            names = []
+            for i in rows:
+                names.append(i[1])
+            if self.player1_name in names and self.player2_name not in names:
+                con.execute("select score from players where name = '" + self.player1_name + "'")
+                score_player1 = con.fetchone()[0]
+                con.execute("update players set score = '" + str(
+                    score_player1 + 5) + "' where name = '" + self.player1_name + "'")
+                con.execute("insert into players(name,score) values (?,?)", (self.player2_name, '5'))
+            elif self.player1_name not in names and self.player2_name in names:
+                con.execute("insert into players(name,score) values (?,?)", (self.player1_name, '5'))
+                con.execute("select score from players where name = '" + self.player2_name + "'")
+                score_player2 = con.fetchone()[0]
+                con.execute("update players set score = '" + str(
+                    score_player2 + 5) + "' where name = '" + self.player2_name + "'")
+            elif self.player1_name in names and self.player2_name in names:
+                con.execute("select score from players where name = '" + self.player1_name + "'")
+                score_player1 = con.fetchone()[0]
+                con.execute("update players set score = '" + str(
+                    score_player1 + 5) + "' where name = '" + self.player1_name + "'")
+                con.execute("select score from players where name = '" + self.player2_name + "'")
+                score_player2 = con.fetchone()[0]
+                con.execute("update players set score = '" + str(
+                    score_player2 + 5) + "' where name = '" + self.player2_name + "'")
+            else:
+                con.execute("insert into players(name,score) values (?,?)", (self.player1_name, '5'))
+                con.execute("insert into players(name,score) values (?,?)", (self.player2_name, '5'))
+        # Save(commit the changes)
+        conn.commit()
+        # Close the connection
+        conn.close()
 
 
     def help(self):
@@ -156,11 +242,7 @@ class Game:
         #   7. across first diagonal
         #   8. across second diagonal
         for combo in self.win_combinations:
-            str1 = '-'.join(board)
-            print("Board : " + str1)
             if (board[combo[0]] == board[combo[1]] == board[combo[2]] == mark):
-                str2 = '-'.join(mark)
-                print("Mark " + str2)
                 return True
         return False
 
@@ -190,7 +272,7 @@ class Game:
                     return None
 
     def start_game(self):
-        "welcomes user, prints help message and hands over to the main game loop"
+        # welcomes user, prints help message and hands over to the main game loop
         # welcome user
         print('''\n\t---------------------
                  \n\t|    TIC-TAC-TOE    |
@@ -212,11 +294,11 @@ class Game:
         if random.randint(0, 1) == 0:
             print("{} will go first".format(self.player1_name))
             # self.print_board()
-            self.enter_game_loop('p1')#c
+            self.enter_game_loop('p1')# first player
         else:
             print("{} will go first".format(self.player2_name))
             # now, enter the main game loop
-            self.enter_game_loop('p2')#h
+            self.enter_game_loop('p2')# second player
 
 
     def get_player_move(self):
@@ -226,72 +308,65 @@ class Game:
         return move - 1
 
     def get_player1_name(self):
-        return input("What is the name of the first player? ")
+        return input("What is the name of the first player? ").upper()
 
     def get_player2_name(self):
-        return input("What is the name of the second player? ")
+        return input("What is the name of the second player? ").upper()
 
     def enter_game_loop(self, turn):
         "starts the main game loop"
         is_running = True
-        player = turn  # h for human, c for computer - artifical inteligence
+        player = turn  # p1 for the first player, p2 for the second player
         while is_running:
-            print("While is running, before the turn ")
             if player == 'p1':
-                print("First player turn")
                 user_input = self.get_player_move()
                 self.make_move(self.board, user_input, self.player1_mark)
-                print("Pre is winning prvi igrac")
                 if self.is_winner(self.board, self.player1_mark):
-                    print("prvi igrac usao je u is winning")
                     self.print_board()
                     print("\n\tCONGRATULATIONS {}, YOU HAVE WON THE GAME!!! \t\n".format(self.player1_name))
-                    # self.incr_score(self.player_name)
+                    self.incr_decr_score_player1_win()
                     is_running = False
                     # break
                 else:
-                    print("Else grana prvi igrac")
                     if self.is_board_full():
-                        print("Nereseno prvi")
                         self.print_board()
                         print("\n\t-- Match Draw --\t\n")
                         is_running = False
+                        self.incr_score_match_draw()
                         # break
                     else:
                         self.print_board()
                         player = 'p2'
-            # computer's turn to play
+
+            # second player's turn to play
             else:
-                print("Second player turn")
-                player2_move = self.get_player_move()
-                self.make_move(self.board, player2_move, self.player2_mark)
-                print("Pre is winning drugi igrac")
+                user_input = self.get_player_move()
+                self.make_move(self.board, user_input, self.player2_mark)
                 if self.is_winner(self.board, self.player2_mark):
-                    print("drugi igrac usao je u is winning")
                     self.print_board()
                     print("\n\t{} HAS WON!!!!\t\n".format(self.player2_name))
+                    self.incr_decr_score_player2_win()
                     is_running = False
                     # break
                 else:
-                    print("Else grana drugi igrac")
                     if self.is_board_full():
-                        print("Nereseno drugi")
                         self.print_board()
                         print("\n\t -- Match Draw -- \n\t")
                         is_running = False
+                        self.incr_score_match_draw()
                         # break
                     else:
                         self.print_board()
                         player = 'p1'
 
-        # Save(commit the changes)
+        # Create a connection object
+        # The data will be stored in the scores.db
         conn = sqlite3.connect("scores.db")
+        # Create a cursor object
         con = conn.cursor()
-        for row in con.execute("select name,score from players order by score desc"):
-            print(row)
-
-        name, score = con.fetchone()
-        print("The leader is {} with {} points".format(name, score))
+        con.execute("select name,score from players order by score desc, name asc")
+        username, top_score = con.fetchone()
+        print("The leader is {} with {} points".format(username, top_score))
         # Close the connection
         conn.close()
         # when you break out of the loop, end the game
