@@ -7,7 +7,7 @@ class TestGame(unittest.TestCase):
     'Class TestGame that contains tests for the game'
 
     def test_opponent(self):
-
+        '''Method that tests opposite mark'''
         game = Game()
         resultX = game.opponent(mark='X')
         resultO = game.opponent(mark='O')
@@ -15,13 +15,13 @@ class TestGame(unittest.TestCase):
         self.assertTrue(resultO, 'X')
 
     def test_get_moves(self):
-
+        '''Method that tests a list of available moves'''
         game = Game()
         game.board[1][2]='X'
         self.assertTrue(game.get_moves(), 8)
 
     def test_calculate_move(self):
-
+        '''Method that tests computer move on the corners'''
         game = Game()
         game.random_corner = Mock(return_value=[0, 0])
         self.assertEqual(game.calculate_move(), {'row': 0, 'col': 0})
@@ -30,25 +30,28 @@ class TestGame(unittest.TestCase):
         self.assertEqual(x['col'], 0)
 
     def test_calculate_move1(self):
+        '''Method that tests computer move based on the minimax algorithm'''
         game = Game()
         game.is_board_empty= Mock(return_value=False)
         game.minimax = Mock(return_value=[2, None])
         self.assertEqual(game.calculate_move(), False)
 
     def test_calculate_move2(self):
+        '''Method that tests computer move based on the minimax algorithm'''
         game = Game()
         game.is_board_empty = Mock(return_value=False)
         game.minimax = Mock(return_value=[-2, None])
         self.assertEqual(game.calculate_move(), False)
 
     def test_calculate_move3(self):
+        '''Method that tests computer move based on the minimax algorithm'''
         game = Game()
         game.is_board_empty = Mock(return_value=False)
         game.minimax = Mock(return_value=[[1, 1], [2, 2]])
         self.assertEqual(game.calculate_move(), {'row': 2, 'col': 2})
 
     def test_minimax(self):
-
+        '''Method that tests computer and player best move for a given board'''
         game = Game()
         game.board = [
             ['X', 'O', 'X'],
@@ -63,6 +66,8 @@ class TestGame(unittest.TestCase):
         self.assertEqual(best_move1[1], [2, 2])
 
     def test_minimax1(self):
+        '''Method that tests computer best move for a given board
+           Check if the return assigned value [-1, None]'''
         game = Game()
         game.board = [
             ['X', 'O', 'X'],
@@ -75,6 +80,8 @@ class TestGame(unittest.TestCase):
         self.assertEqual(best_move[1], None)
 
     def test_minimax2(self):
+        '''Method that tests computer best move for a given board
+           Check if the return assigned value [1, None]'''
         game = Game()
         game.board = [
             ['X', 'O', 'X'],
@@ -87,6 +94,8 @@ class TestGame(unittest.TestCase):
         self.assertEqual(best_move[1], None)
 
     def test_minimax3(self):
+        '''Method that tests computer best move for a given board
+           Check if the return assigned value [0, None]'''
         game = Game()
         game.board = [
             ['X', 'O', 'X'],
